@@ -89,11 +89,6 @@ class MusicRepository(private val context: Context) {
         return songList
     }
 
-    /**
-     * Android 11+ (API 30): crea la solicitud de borrado que muestra al usuario
-     * el diálogo del sistema para confirmar la eliminación de los archivos.
-     * Devuelve null si no aplica o si falla.
-     */
     fun createDeleteIntentSender(songs: List<Song>): IntentSender? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || songs.isEmpty()) return null
         return try {
@@ -104,11 +99,6 @@ class MusicRepository(private val context: Context) {
             null
         }
     }
-
-    /**
-     * Android 10 o menor: borrado directo. En Android 10 exactamente puede fallar
-     * para archivos de otras apps (requiere permiso especial).
-     */
     fun deleteSongsLegacy(songs: List<Song>) {
         songs.forEach { song ->
             try {
