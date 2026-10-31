@@ -26,7 +26,12 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    permissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_AUDIO))
+                    permissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.READ_MEDIA_AUDIO,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        )
+                    )
                 } else {
                     permissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
                 }

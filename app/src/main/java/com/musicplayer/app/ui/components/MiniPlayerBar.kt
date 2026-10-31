@@ -148,15 +148,6 @@ fun FullPlayerScreen(
     onClose: () -> Unit
 ) {
     var optionsMenuExpanded by remember { mutableStateOf(false) }
-    var isDragging by remember { mutableStateOf(false) }
-    var dragProgress by remember { mutableStateOf(0f) }
-
-    val displayedProgress = if (isDragging) dragProgress else progress.coerceIn(0f, 1f)
-    val displayedPositionMs = if (isDragging && durationMs > 0) {
-        (durationMs * dragProgress).toLong()
-    } else {
-        currentPositionMs
-    }
 
     Column(
         modifier = Modifier
@@ -285,42 +276,12 @@ fun FullPlayerScreen(
         }
 
         // 4. Progreso: Barra arrastrable con contador actual (izquierda) y total (derecha)
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Slider(
-                value = displayedProgress,
-                onValueChange = { newValue ->
-                    isDragging = true
-                    dragProgress = newValue
-                },
-                onValueChangeFinished = {
-                    onSeek(dragProgress)
-                    isDragging = false
-                },
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.White,
-                    activeTrackColor = Color(0xFFD0BCFF),
-                    inactiveTrackColor = Color.White.copy(alpha = 0.2f)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatTimeMs(displayedPositionMs),
-                    color = Color.White.copy(alpha = 0.65f),
-                    fontSize = 12.sp
-                )
-                Text(
-                    text = formatTimeMs(durationMs),
-                    color = Color.White.copy(alpha = 0.65f),
-                    fontSize = 12.sp
-                )
-            }
-        }
-
+        PlayerProgressBar(
+            progress = progress,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            onSeek = onSeek
+        )
         // 5. Controles de reproducción (Inferior):
         // 1. Aleatoria | 2. Anterior | 3. Play/Pausa | 4. Siguiente | 5. Repetir
         Row(
@@ -335,7 +296,7 @@ fun FullPlayerScreen(
                 Icon(
                     imageVector = Icons.Default.Shuffle,
                     contentDescription = "Aleatorio",
-                    tint = if (isShuffleEnabled) Color(0xFFD0BCFF) else Color.White.copy(alpha = 0.45f),
+                    tint = if (isShuffleEnabled) Color(0xFF69F0AE) else Color.White.copy(alpha = 0.45f),
                     modifier = Modifier.size(26.dp)
                 )
             }
@@ -382,7 +343,7 @@ fun FullPlayerScreen(
                 Icon(
                     imageVector = if (isRepeatEnabled) Icons.Default.RepeatOne else Icons.Default.Repeat,
                     contentDescription = "Repetir canción",
-                    tint = if (isRepeatEnabled) Color(0xFFD0BCFF) else Color.White.copy(alpha = 0.45f),
+                    tint = if (isRepeatEnabled) Color(0xFF69F0AE) else Color.White.copy(alpha = 0.45f),
                     modifier = Modifier.size(26.dp)
                 )
             }

@@ -1,17 +1,26 @@
 package com.musicplayer.app.service
 
 import android.content.Context
+import android.content.Intent
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.MediaMetadata
+import androidx.media3.session.MediaSession
 import com.musicplayer.app.data.model.Song
 
+
+
 class MusicPlayerController(
-    context: Context,
-    private val onSongFinished: () -> Unit
+    private val context: Context,
+    private val onSongFinished: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
 ) {
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
     private val audioEnhancer = AudioEnhancerService()
+    private val mediaSession: MediaSession = 
+        MediaSession.Builder(context, QueueAwarePlayer(exoPlayer, onNext, onPrevious)).build()
 
     init {
         exoPlayer.addListener(object : Player.Listener {
@@ -26,10 +35,21 @@ class MusicPlayerController(
             }
         })
         audioEnhancer.attachAlwaysOnEnhancement(exoPlayer.audioSessionId)
+        PlayerSessionHolder.session = mediaSession
+        context.startService(Intent(context, PlaybackService::class.java))
     }
 
     fun prepareSongFromStart(song: Song, autoPlay: Boolean) {
-        val mediaItem = MediaItem.fromUri(song.uri)
+        val mediaItem = MediaItem.Builder()
+            .setUri(song.uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(song.title)
+                    .setArtist(song.artist)
+                    .setAlbumTitle(song.album)
+                    .build()
+            )
+            .build()
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
         exoPlayer.seekTo(0L)
@@ -70,6 +90,9 @@ class MusicPlayerController(
     }
 
     fun release() {
+        PlayerSessionHolder.session = null
+        context.stopService(Intent(context, PlaybackService::class.java))
+        mediaSession.release()
         audioEnhancer.release()
         exoPlayer.release()
     }

@@ -20,9 +20,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val storage = LastSongStorage(application)
     private val hiddenStorage = HiddenFoldersStorage(application)
     private val repository = MusicRepository(application)
-    private val playerController = MusicPlayerController(application) {
-        onTrackEnded()
-    }
+    private val playerController = MusicPlayerController(
+        context = application,
+        onSongFinished = { onTrackEnded() },
+        onNext = { nextSong() },
+        onPrevious = { previousSong() }
+    )
 
     // Todas las canciones escaneadas (incluidas las de carpetas ocultas)
     private var allScannedSongs: List<Song> = emptyList()
@@ -100,14 +103,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Aplica el filtro de carpetas ocultas y el ordenamiento actual. */
     private fun refreshLocalSongs() {
         val hidden = _hiddenFolders.value
         val visible = allScannedSongs.filter { it.folder !in hidden }
         _localSongs.value = sortSongsList(visible, _sortOption.value, _sortAscending.value)
     }
 
-    // ---------- Carpetas: ocultar / mostrar ----------
+
 
     fun hideFolder(folderName: String) {
         val updated = _hiddenFolders.value + folderName
@@ -123,23 +125,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         refreshLocalSongs()
     }
 
-    // ---------- Carpetas: eliminar ----------
-
-    /** Android 11+: devuelve el diálogo del sistema para confirmar el borrado. */
     fun createDeleteIntentSender(songs: List<Song>): IntentSender? =
         repository.createDeleteIntentSender(songs)
 
-    /** Android 10 o menor: borra directamente y actualiza la lista. */
+    //Android 10 o menor: borra directamente y actualiza la lista.
     fun deleteSongsLegacy(songs: List<Song>) {
         repository.deleteSongsLegacy(songs)
         onSongsDeleted(songs)
     }
 
-    /** Se llama cuando los archivos ya fueron eliminados del dispositivo. */
     fun onSongsDeleted(deleted: List<Song>) {
         val ids = deleted.map { it.id }.toSet()
 
-        // Si la canción actual fue eliminada, se pausa y se limpia
         val current = _currentSong.value
         if (current != null && current.id in ids) {
             if (_isPlaying.value) {
@@ -179,10 +176,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Carga la lista completa a la que pertenece la canción seleccionada
-     * y comienza a reproducir desde esa canción.
-     */
+    // Carga la lista completa a la que pertenece la canción seleccionada
     fun selectSong(song: Song, queue: List<Song> = _localSongs.value) {
         val targetQueue = if (queue.isNotEmpty()) queue.toList() else listOf(song)
         _currentQueue.value = targetQueue
@@ -270,17 +264,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Lógica de ordenamiento:
-     * - Al elegir una opción por primera vez: ordena Ascendente.
-     * - Si se vuelve a tocar la misma opción activa: invierte a Descendente (y viceversa).
-     */
+    // Lógica de ordenamiento:
     fun selectSortOption(option: SortOption) {
         if (_sortOption.value == option) {
             _sortAscending.value = !_sortAscending.value
         } else {
             _sortOption.value = option
-            _sortAscending.value = true
+            _sortAscending.value = option != SortOption.DATE_ADDED
         }
         _localSongs.value = sortSongsList(_localSongs.value, _sortOption.value, _sortAscending.value)
     }

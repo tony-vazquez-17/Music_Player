@@ -34,7 +34,6 @@ fun SongRowItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .background(if (isCurrentSong) Color.White.copy(alpha = 0.08f) else Color.Transparent)
             .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -45,12 +44,20 @@ fun SongRowItem(
                 .background(CoverArtBrush),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.75f),
-                modifier = Modifier.size(24.dp)
-            )
+            if (isCurrentSong){
+                EqualizerBars(
+                    isPlaying = LocalIsPlaying.current,
+                    modifier = Modifier.size(26.dp),
+                    color = Color.White
+                )
+            }else{
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.75f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -58,7 +65,7 @@ fun SongRowItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
-                color = if (isCurrentSong) Color(0xFFD0BCFF) else Color.White,
+                color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
